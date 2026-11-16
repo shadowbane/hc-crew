@@ -61,7 +61,7 @@ hc-crew update         hc-crew version
 
 ## Releases
 
-Push a tag (`git tag v0.1.1 && git push origin v0.1.1`). The `release` workflow runs the tests, builds the four binaries and attaches them, with `checksums.txt`, to a GitHub release. The installer always takes the latest release.
+Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and changes are recorded in [CHANGELOG.md](CHANGELOG.md) ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)). To release, move the `[Unreleased]` entries under a new `## [X.Y.Z] - YYYY-MM-DD` heading, update the links at the bottom, commit, and push a tag (`git tag vX.Y.Z && git push origin vX.Y.Z`). The `release` workflow fails if CHANGELOG.md has no section for the tag. Otherwise it runs the tests, builds the four binaries and attaches them, with `checksums.txt`, to a GitHub release. The installer always takes the latest release.
 
 ## Tests
 
