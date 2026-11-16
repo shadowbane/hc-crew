@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `hc-crew resume` no longer fails for an advisor that was never consulted. Claude Code had not saved that session, so `claude --resume` exited with "No conversation found"; the advisor now starts a fresh session with the same id.
+
 ## [0.1.1] - 2026-11-16
 
 ### Added

@@ -136,7 +136,9 @@ func launch(m *Meta, mainResume, advResume bool, prompt string) error {
 		return err
 	}
 	session := func(id string, resume bool) []string {
-		if resume {
+		// Claude Code writes a session to disk only after its first message; an
+		// advisor that was never consulted has nothing to resume.
+		if resume && sessionSaved(id) {
 			return []string{"--resume", id}
 		}
 		return []string{"--session-id", id}
@@ -374,4 +376,11 @@ func claudeBin() string {
 		return b
 	}
 	return "claude"
+}
+
+// sessionSaved reports whether Claude Code has written a transcript for this session id.
+func sessionSaved(id string) bool {
+	home, _ := os.UserHomeDir()
+	m, _ := filepath.Glob(filepath.Join(home, ".claude", "projects", "*", id+".jsonl"))
+	return len(m) > 0
 }
