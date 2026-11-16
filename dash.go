@@ -174,7 +174,9 @@ func (d *dashModel) pull() {
 		case "edit":
 			d.edits++
 		case "bash":
-			d.tests++
+			if ev.Detail != "running" {
+				d.tests++
+			}
 		case "nudge":
 			d.nudges++
 		case "consult":
@@ -225,7 +227,11 @@ func (d *dashModel) View() string {
 	}
 	w := d.w
 	var parts []string
-	parts = append(parts, d.header(w), d.tree(w))
+	parts = append(parts, d.header(w))
+	if b := d.blocked(w); b != "" {
+		parts = append(parts, b)
+	}
+	parts = append(parts, d.tree(w))
 	parts = append(parts, d.middle(w))
 	used := lipgloss.Height(strings.Join(parts, "\n"))
 	feedH := d.h - used - 2
@@ -247,6 +253,36 @@ func (d *dashModel) header(w int) string {
 	}
 	task := fg(cText).Render(trunc(label, max(room, 4)))
 	return pad(left+task, right, w)
+}
+
+// blocked is a red banner while main or the advisor waits for a person
+// (a permission prompt or a question) or has stopped on an error.
+func (d *dashModel) blocked(w int) string {
+	var lines []string
+	for _, role := range []string{"main", "advisor"} {
+		t := d.terms[role]
+		if t.state != "live" || (t.agent != "blocked" && t.agent != "error") {
+			continue
+		}
+		name := d.m.MainName
+		if role == "advisor" {
+			name = d.m.AdvisorName
+		}
+		what := "needs you"
+		if t.agent == "error" {
+			what = "stopped on an error"
+		}
+		msg := t.msg
+		if msg == "" {
+			msg = "open its pane"
+		}
+		head := "⚠ " + role + " " + what + ": "
+		right := fg(cDim).Render("hc attach " + name)
+		room := w - lipgloss.Width(head) - lipgloss.Width(right) - 2
+		left := fg(cRed).Bold(true).Render(head) + fg(cText).Render(trunc(msg, max(room, 4)))
+		lines = append(lines, pad(left, right, w))
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (d *dashModel) tree(w int) string {

@@ -14,8 +14,8 @@ import (
 var checkpoints = []string{"plan", "error", "done"}
 
 // cmdConsult is run by the main session at a checkpoint. It sends the question
-// to the advisor and waits for the advisor's reply (written by cmdAdvise),
-// printing it so the main session gets it as the Bash tool result.
+// to the advisor and returns at once: the advisor's reply arrives in main as a
+// message ("Advisor: ..."), so main never sits in a blocked shell.
 func cmdConsult(args []string) error {
 	m, err := envCrew()
 	if err != nil {
@@ -33,15 +33,6 @@ func cmdConsult(args []string) error {
 	if q == "" {
 		return errors.New("empty question")
 	}
-	timeout := 540 * time.Second // under the Bash tool's 600s maximum
-
-	dir := crewDir(m.ID)
-	replyFile := filepath.Join(dir, "reply.txt")
-	waitFile := filepath.Join(dir, "waiting")
-	_ = os.Remove(replyFile)
-	_ = os.WriteFile(waitFile, []byte(cp), 0o644)
-	defer os.Remove(waitFile)
-
 	_ = appendEvent(m.ID, Event{Kind: "consult", Role: cp, Text: q})
 
 	msg := fmt.Sprintf("[crew checkpoint: %s]\n%s\n\nMain session transcript (JSONL, read the tail if you need context): %s\nReply with: %s advise <<'EOF'\n<your advice>\nEOF",
@@ -49,22 +40,23 @@ func cmdConsult(args []string) error {
 	if out, err := exec.Command("hc", "send", m.AdvisorName, msg).CombinedOutput(); err != nil {
 		return fmt.Errorf("could not reach advisor %s: %v: %s", m.AdvisorName, err, strings.TrimSpace(string(out)))
 	}
-
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		if b, err := os.ReadFile(replyFile); err == nil {
-			_ = os.Remove(replyFile)
-			fmt.Printf("Advisor (%s checkpoint):\n%s\n", cp, strings.TrimSpace(string(b)))
-			return nil
-		}
-		time.Sleep(time.Second)
+	// hc wait on the advisor returns at once while it is still idle; let it pick the question up first.
+	for i := 0; i < 20 && hcGet(m.AdvisorName).agent != "working"; i++ {
+		time.Sleep(500 * time.Millisecond)
 	}
-	fmt.Println("The advisor is still thinking. Carry on; its reply will arrive as a message.")
+	wait := fmt.Sprintf("hc wait %s --timeout 100", m.AdvisorName)
+	switch cp {
+	case "plan":
+		fmt.Printf("Asked the advisor. Its reply arrives as a message starting with \"Advisor:\".\nUntil then you may read and prepare, but do not start edits. To wait, run: %s (repeat on timeout; it also returns when the message arrives).\n", wait)
+	case "done":
+		fmt.Printf("Asked the advisor. Its reply arrives as a message starting with \"Advisor:\".\nDo not call the task done before you have it. To wait, run: %s (repeat on timeout; it also returns when the message arrives).\n", wait)
+	default:
+		fmt.Println("Asked the advisor. Carry on; its reply arrives as a message starting with \"Advisor:\".")
+	}
 	return nil
 }
 
-// cmdAdvise is run by the advisor. If main is waiting in consult, the reply is
-// handed over through a file; otherwise it is sent to main as a message.
+// cmdAdvise is run by the advisor: it logs the advice and sends it to main.
 func cmdAdvise(args []string) error {
 	m, err := envCrew()
 	if err != nil {
@@ -79,23 +71,10 @@ func cmdAdvise(args []string) error {
 		return errors.New("empty advice")
 	}
 	_ = appendEvent(m.ID, Event{Kind: "advice", Text: a})
-
-	dir := crewDir(m.ID)
-	if _, err := os.Stat(filepath.Join(dir, "waiting")); err == nil {
-		tmp := filepath.Join(dir, "reply.tmp")
-		if err := os.WriteFile(tmp, []byte(a), 0o644); err != nil {
-			return err
-		}
-		if err := os.Rename(tmp, filepath.Join(dir, "reply.txt")); err != nil {
-			return err
-		}
-		fmt.Println("Delivered to main.")
-		return nil
-	}
 	if out, err := exec.Command("hc", "send", m.MainName, "Advisor: "+a).CombinedOutput(); err != nil {
 		return fmt.Errorf("could not reach main %s: %v: %s", m.MainName, err, strings.TrimSpace(string(out)))
 	}
-	fmt.Println("Sent to main as a message.")
+	fmt.Println("Sent to main.")
 	return nil
 }
 

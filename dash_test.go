@@ -15,7 +15,7 @@ import (
 // HC_CREW_RENDER=1 go test -run TestRender -v to look at it.
 func TestRender(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("XDG_STATE_HOME", dir)
+	t.Setenv("HC_CREW_STATE", dir)
 	m := &Meta{ID: "demo", Task: "Move the API to Rust. Done means: every test passes", Created: time.Now().Add(-3 * time.Minute),
 		MainName: "crew-demo-main", AdvisorName: "crew-demo-advisor", MainSession: "x", AdvisorSession: "y"}
 	if err := saveMeta(m); err != nil {
@@ -224,5 +224,53 @@ func TestNudge(t *testing.T) {
 		if nudge(id, read) != "" {
 			t.Fatal("streak not reset by Agent call")
 		}
+	}
+}
+
+func TestHCRunTests(t *testing.T) {
+	t.Setenv("HC_CREW_STATE", t.TempDir())
+	t.Setenv("CREW_ID", "ab12")
+	if !isTestCommand("hc run --bg --name crew-ab12-t -- php artisan test --parallel") {
+		t.Error("hc run of a test suite not seen as a test")
+	}
+	if isTestCommand("hc run --bg --name crew-ab12-b -- cargo build") {
+		t.Error("hc run of a build seen as a test")
+	}
+	name, prog, bg := hcRunParts(`cd app && hc run --bg --name crew-ab12-t --cwd /x -- go test ./...`)
+	if name != "crew-ab12-t" || prog != "go test ./..." || !bg {
+		t.Errorf("hcRunParts = %q %q %v", name, prog, bg)
+	}
+	if got := hcReadName("hc read --lines 80 crew-ab12-t"); got != "crew-ab12-t" {
+		t.Errorf("hcReadName = %q", got)
+	}
+	start := &hookInput{Event: "PostToolUse", ToolName: "Bash",
+		ToolInput: json.RawMessage(`{"command":"hc run --bg --name crew-ab12-t -- pest"}`)}
+	ev, ok := hookEvent(start)
+	if !ok || ev.Detail != "running" || ev.Key != "crew-ab12-t" {
+		t.Fatalf("start event = %+v %v", ev, ok)
+	}
+	read := &hookInput{Event: "PostToolUse", ToolName: "Bash",
+		ToolInput:    json.RawMessage(`{"command":"hc read crew-ab12-t --lines 80"}`),
+		ToolResponse: json.RawMessage(`{"stdout":"Tests: 2 failed, 40 passed"}`)}
+	ev, ok = hookEvent(read)
+	if !ok || ev.Detail != "2 failed" || ev.Text != "pest" {
+		t.Fatalf("read event = %+v %v", ev, ok)
+	}
+	if _, ok = hookEvent(read); ok {
+		t.Error("second read of the same terminal logged again")
+	}
+}
+
+func TestBlockedBanner(t *testing.T) {
+	d := &dashModel{m: &Meta{ID: "ab12", MainName: "crew-ab12-main", AdvisorName: "crew-ab12-advisor"},
+		terms: statusMsg{"main": {found: true, state: "live", agent: "blocked", msg: "Allow Bash: rm -rf vendor?"},
+			"advisor": {found: true, state: "live", agent: "idle"}}}
+	b := d.blocked(100)
+	if !strings.Contains(b, "main needs you") || !strings.Contains(b, "Allow Bash") || strings.Contains(b, "advisor") {
+		t.Errorf("banner = %q", b)
+	}
+	d.terms["main"] = termInfo{found: true, state: "live", agent: "working"}
+	if d.blocked(100) != "" {
+		t.Error("banner shown while nobody is blocked")
 	}
 }

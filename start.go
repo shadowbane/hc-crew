@@ -16,14 +16,20 @@ import (
 const mainPrompt = `You are the MAIN builder in an hc-crew run (crew %[1]s). You plan, write code and drive the build.
 
 Crew rules:
-1. Advisor (Fable, read-only) - consult it at exactly these checkpoints, with a Bash timeout of 600000 ms:
+1. Advisor (Fable, read-only) - consult it at exactly these checkpoints:
    - before your plan locks:            %[2]s consult plan "<plan summary + what you are unsure of>"
    - when the same error happens twice: %[2]s consult error "<the error + what you already tried>"
    - before you call the task done:     %[2]s consult done "<what changed + how you verified it>"
-   The command waits and prints the advisor's reply. If it says the advisor is still thinking, carry on; the reply arrives later as a message.
+   The command returns at once. The reply arrives later as a message starting with "Advisor:"; the command tells you how to wait for it.
 2. Checker - to verify work, spawn a subagent with model "sonnet" whose only job is to run the tests and try to break the change. It must not edit files.
 3. Swarm - you do not explore the repo yourself. Any reading beyond the file you are about to edit (understanding code, grep/find sweeps, cat/sed of several files, docs, summaries) goes to subagents: subagent_type "Explore", model "haiku", 2-4 in parallel in one message, each with one narrow, self-contained question and a request for a short answer with file:line references. Reading through Bash (cat, sed, grep, find) counts as reading. You keep the plan, the decisions and the edits.
-4. Do not start other hc terminals or crews.`
+4. Slow commands (test suites, builds, installs, anything over ~30 s) never run directly in your Bash tool, which would block you. Run them in an hc terminal and wait with hc, which returns early when a message arrives:
+     hc run --bg --name crew-%[1]s-<short> -- <command>
+     hc wait crew-%[1]s-<short> --timeout 100      (repeat on timeout)
+     hc read crew-%[1]s-<short> --lines 80
+     hc kill crew-%[1]s-<short>; hc rm crew-%[1]s-<short>
+   Several can run at once. A Checker subagent may run the same way.
+5. Do not start other crews, and do not start other agents with hc run.`
 
 const advisorPrompt = `You are the ADVISOR in an hc-crew run (crew %[1]s). You never edit files, never run builds, never start agents.
 The main builder (Opus) consults you at checkpoints: plan, error, done. Each consult includes the question and the path of the main session transcript (JSONL); read its tail or repo files only when needed.
@@ -198,7 +204,8 @@ func hcRun(m *Meta, role string, argv []string) error {
 func writeSettings(id, bin string) (string, error) {
 	hook := []map[string]any{{"type": "command", "command": bin + " hook", "timeout": 10}}
 	s := map[string]any{
-		"permissions": map[string]any{"allow": []string{"Bash(" + bin + " consult:*)"}},
+		"permissions": map[string]any{"allow": []string{"Bash(" + bin + " consult:*)",
+			"Bash(hc wait:*)", "Bash(hc read:*)", "Bash(hc kill crew-" + id + "-:*)", "Bash(hc rm crew-" + id + "-:*)"}},
 		"hooks": map[string]any{
 			"PreToolUse":   []map[string]any{{"matcher": "Agent|Task", "hooks": hook}},
 			"PostToolUse":  []map[string]any{{"matcher": "Agent|Task|Bash|Edit|Write|MultiEdit|Read|Grep|Glob", "hooks": hook}},

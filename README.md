@@ -37,7 +37,11 @@ Inside Herdr this gives the main session a tab and opens the dashboard to its ri
 | Checker (Sonnet) | subagent of main | runs tests, tries to break the change |
 | Swarm (Haiku) | subagents of main | bulk reading in parallel |
 
-Checkpoints: main runs `hc-crew consult plan|error|done "<question>"`, which sends the question to the advisor (`hc send`) and waits for `hc-crew advise` to deliver the answer.
+Checkpoints: main runs `hc-crew consult plan|error|done "<question>"`, which sends the question to the advisor (`hc send`) and returns at once. The advisor answers with `hc-crew advise`, which arrives in main as a message ("Advisor: ..."). At plan and done, main waits for it with `hc wait <advisor>`, which also returns as soon as the message lands.
+
+Slow commands (test suites, builds) run in their own hc terminals (`hc run --bg --name crew-<id>-<x> -- <cmd>`, then `hc wait` and `hc read`), so main never sits in a blocked shell. The dashboard picks up test results from the `hc read`.
+
+When main or the advisor is blocked on a permission prompt or a question, the dashboard shows a red "needs you" banner.
 
 ## Commands
 

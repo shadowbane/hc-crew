@@ -89,14 +89,28 @@ func hookEvent(in *hookInput) (Event, bool) {
 			Command string `json:"command"`
 		}
 		_ = json.Unmarshal(in.ToolInput, &ti)
-		if reCrewCmd.MatchString(ti.Command) || !isTestCommand(ti.Command) {
-			return Event{}, false // consult/advise log themselves; only tests are worth a feed line
+		if reCrewCmd.MatchString(ti.Command) {
+			return Event{}, false // consult/advise log themselves
 		}
 		var tr struct {
 			Stdout string `json:"stdout"`
 			Stderr string `json:"stderr"`
 		}
 		_ = json.Unmarshal(in.ToolResponse, &tr)
+		// A test suite started in its own hc terminal: note it now, take the result from `hc read`.
+		if name, cmd, bg := hcRunParts(ti.Command); name != "" && bg && isTestCommand(cmd) {
+			markHCTest(name, firstLine(cmd))
+			return Event{Kind: "bash", Agent: in.AgentID, Key: name, Text: firstLine(cmd), Detail: "running"}, true
+		}
+		if name := hcReadName(ti.Command); name != "" {
+			if cmd, ok := takeHCTest(name); ok {
+				return Event{Kind: "bash", Agent: in.AgentID, Key: name, Text: cmd, Detail: testSummary(tr.Stdout + "\n" + tr.Stderr)}, true
+			}
+			return Event{}, false
+		}
+		if !isTestCommand(ti.Command) {
+			return Event{}, false // only tests are worth a feed line
+		}
 		return Event{Kind: "bash", Agent: in.AgentID, Text: firstLine(ti.Command), Detail: testSummary(tr.Stdout + "\n" + tr.Stderr)}, true
 
 	case (in.ToolName == "Edit" || in.ToolName == "Write" || in.ToolName == "MultiEdit") && in.Event == "PostToolUse":
@@ -195,6 +209,9 @@ func isTestCommand(cmd string) bool {
 		for len(f) > 0 && (reEnvAssign.MatchString(f[0]) || f[0] == "rtk" || f[0] == "npx" || f[0] == "env" ||
 			f[0] == "time" || f[0] == "herd" || f[0] == "(") {
 			f = f[1:]
+		}
+		if len(f) > 1 && f[0] == "hc" && f[1] == "run" {
+			f = hcRunArgv(f[2:])
 		}
 		if len(f) == 0 {
 			continue
