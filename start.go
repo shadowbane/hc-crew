@@ -31,6 +31,9 @@ Crew rules:
    Several can run at once. A Checker subagent may run the same way.
 5. Do not start other crews, and do not start other agents with hc run.`
 
+// resumeNote is main's first message after a resume.
+const resumeNote = `[hc-crew] This crew was restarted. Your crew rules are in your system prompt now, and they replace any crew rules you remember from earlier in this conversation; re-read them. If you were in the middle of a task, carry on under the current rules. Otherwise reply "ready" and wait.`
+
 const advisorPrompt = `You are the ADVISOR in an hc-crew run (crew %[1]s). You never edit files, never run builds, never start agents.
 The main builder (Opus) consults you at checkpoints: plan, error, done. Each consult includes the question and the path of the main session transcript (JSONL); read its tail or repo files only when needed.
 Answer short: what was missed, the biggest risk, one concrete recommendation. For "error": root cause or rabbit hole? For "done": did the diff break anything?
@@ -119,7 +122,11 @@ func cmdResume(args []string) error {
 		}
 		_ = exec.Command("hc", "rm", n).Run() // clear a finished terminal so the name is free
 	}
-	if err := launch(m, true, true, ""); err != nil {
+	note := ""
+	if sessionSaved(m.MainSession) {
+		note = resumeNote // a resumed conversation still remembers the crew rules it started with
+	}
+	if err := launch(m, true, true, note); err != nil {
 		return err
 	}
 	_ = appendEvent(m.ID, Event{Kind: "resume", Text: "crew resumed"})
