@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-16
+
 ### Fixed
 
 - `hc-crew resume` no longer fails for an advisor that was never consulted. Claude Code had not saved that session, so `claude --resume` exited with "No conversation found"; the advisor now starts a fresh session with the same id.
@@ -46,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/shadowbane/hc-crew/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/shadowbane/hc-crew/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/shadowbane/hc-crew/releases/tag/v0.1.0
