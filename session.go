@@ -16,6 +16,26 @@ type sessionInfo struct {
 	Path  string
 	Cwd   string // folder the session ran in
 	Title string // the session's name: custom title, else AI title, else first prompt
+	Named string // the name the user gave it with /rename or -n, if any
+}
+
+// crewLabel is the name shown for a crew: the name the user gave main's
+// session with /rename wins over the start task, which wins over the
+// session's AI title or first prompt.
+func crewLabel(m *Meta) string {
+	if m.MainSession == "" {
+		return m.Task // an empty id would glob every session
+	}
+	s, err := findSession(m.MainSession)
+	switch {
+	case err == nil && s.Named != "":
+		return s.Named
+	case m.Task != "":
+		return m.Task
+	case err == nil && !strings.HasPrefix(s.Title, "session "):
+		return s.Title
+	}
+	return ""
 }
 
 // findSession resolves a session id or unique id prefix to its transcript.
@@ -83,6 +103,7 @@ func findSession(idOrPrefix string) (*sessionInfo, error) {
 			break
 		}
 	}
+	si.Named = custom
 	switch {
 	case custom != "":
 		si.Title = custom

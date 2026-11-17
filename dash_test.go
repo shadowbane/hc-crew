@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -272,5 +273,40 @@ func TestBlockedBanner(t *testing.T) {
 	d.terms["main"] = termInfo{found: true, state: "live", agent: "working"}
 	if d.blocked(100) != "" {
 		t.Error("banner shown while nobody is blocked")
+	}
+}
+
+func TestCrewLabel(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	dir := filepath.Join(home, ".claude", "projects", "p")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	id := "11111111-2222-3333-4444-555555555555"
+	write := func(lines ...string) {
+		if err := os.WriteFile(filepath.Join(dir, id+".jsonl"), []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m := &Meta{MainSession: id, Task: "start task"}
+
+	write(`{"type":"custom-title","customTitle":"crew-ab12-main"}`, `{"type":"ai-title","aiTitle":"AI name"}`)
+	if got := crewLabel(m); got != "start task" {
+		t.Errorf("crew- launch name must not win over the task: got %q", got)
+	}
+	write(`{"type":"custom-title","customTitle":"crew-ab12-main"}`, `{"type":"custom-title","customTitle":"Old"}`, `{"type":"custom-title","customTitle":"Renamed"}`)
+	if got := crewLabel(m); got != "Renamed" {
+		t.Errorf("last /rename should win: got %q", got)
+	}
+	write(`{"type":"ai-title","aiTitle":"AI name"}`)
+	if got := crewLabel(&Meta{MainSession: id}); got != "AI name" {
+		t.Errorf("no task: want AI title, got %q", got)
+	}
+	if got := crewLabel(&Meta{Task: "mine"}); got != "mine" {
+		t.Errorf("empty session id must not match another session: got %q", got)
+	}
+	if got := crewLabel(&Meta{MainSession: "99999999-0000-0000-0000-000000000000", Task: "t"}); got != "t" {
+		t.Errorf("unsaved session: want task, got %q", got)
 	}
 }

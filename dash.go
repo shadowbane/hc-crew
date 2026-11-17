@@ -53,6 +53,9 @@ const (
 
 type tickMsg time.Time
 
+// labelMsg carries a crewLabel result back from a background scan.
+type labelMsg string
+
 type dashModel struct {
 	m      *Meta
 	w, h   int
@@ -65,7 +68,8 @@ type dashModel struct {
 	agents map[string]string // subagent id -> model family
 	byAgt  map[string]string // subagent id -> sub key (background subagents)
 	cps    map[string]cpState
-	title  string // main session's own title, used when the crew has no task label
+	label  string // crew name from crewLabel; refreshed so a /rename in main shows up
+	naming bool   // a crewLabel scan is running
 	wakes  int
 	edits  int
 	tests  int
@@ -121,12 +125,15 @@ func (d *dashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if d.frame%5 == 1 {
 			d.scanSubagents()
 		}
-		if d.m.Task == "" && d.frame%25 == 1 {
-			if s, err := findSession(d.m.MainSession); err == nil && !strings.HasPrefix(s.Title, "session ") {
-				d.title = s.Title
-			}
+		if d.frame%25 == 1 && !d.naming {
+			// crewLabel reads main's whole transcript, so keep it off the UI loop.
+			d.naming = true
+			m := *d.m
+			return d, tea.Batch(tick(), func() tea.Msg { return labelMsg(crewLabel(&m)) })
 		}
 		return d, tick()
+	case labelMsg:
+		d.label, d.naming = string(msg), false
 	case pollMsg:
 		return d, pollStatus(d.m)
 	case statusMsg:
@@ -244,9 +251,9 @@ func (d *dashModel) header(w int) string {
 	el := time.Since(d.m.Created).Round(time.Second).String()
 	right := fg(cDim).Render(el)
 	room := w - lipgloss.Width(left) - lipgloss.Width(right) - 1
-	label := d.m.Task
+	label := d.label
 	if label == "" {
-		label = d.title
+		label = d.m.Task
 	}
 	if label == "" {
 		label = "(no goal yet)"

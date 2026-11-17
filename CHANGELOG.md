@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-11-17
+
+### Changed
+
+- `hc-crew ls` and the dashboard header show the name you give main with `/rename`. The order is: your latest `/rename`, then the task you started the crew with, then Claude's own title for the session. A crew started with `--from` keeps the source session's name until you rename it. The dashboard picks up a rename within about 10 seconds, and it reads the transcript in the background, so a long session doesn't freeze it.
+
 ## [0.1.5] - 2026-11-17
 
 ### Changed
@@ -66,7 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/shadowbane/hc-crew/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/shadowbane/hc-crew/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/shadowbane/hc-crew/compare/v0.1.2...v0.1.3

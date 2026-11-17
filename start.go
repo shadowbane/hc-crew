@@ -331,7 +331,7 @@ func cmdLs() error {
 	}
 	for _, m := range ms {
 		fmt.Printf("%s  %s  main:%-9s advisor:%-9s %s\n", m.ID, m.Created.Format("01-02 15:04"),
-			hcState(m.MainName), hcState(m.AdvisorName), trunc(m.Task, 60))
+			hcState(m.MainName), hcState(m.AdvisorName), trunc(crewLabel(m), 60))
 	}
 	return nil
 }
