@@ -20,8 +20,8 @@ const installURL = "https://raw.githubusercontent.com/shadowbane/hc-crew/main/in
 const usage = `hc-crew - run a crew (Fable advises, Opus builds, Sonnet checks, Haiku swarms)
 
 Usage:
-  hc-crew start [--cwd DIR] [--no-ui] ["<task>"] start a crew (task optional) and open its dashboard
-  hc-crew start --from SESSION ["<message>"]     continue a Claude session as the crew's main
+  hc-crew start [--cwd DIR] [--no-ui] ['<task>'] start a crew (task optional) and open its dashboard
+  hc-crew start --from SESSION ['<message>']     continue a Claude session as the crew's main
   hc-crew dash [ID]                              dashboard for a crew (default: newest)
   hc-crew ls                                     list crews
   hc-crew stop ID                                end a crew's terminals (state is kept)

@@ -46,11 +46,13 @@ When main or the advisor is blocked on a permission prompt or a question, the da
 ## Commands
 
 ```
-hc-crew start [--cwd DIR] [--no-ui] [--main-model M] [--advisor-model M] "<task>"
+hc-crew start [--cwd DIR] [--no-ui] [--main-model M] [--advisor-model M] ['<task>']
 hc-crew dash [ID]      hc-crew ls      hc-crew stop ID      hc-crew resume ID
-hc-crew start --from SESSION ["<message>"]   # continue a plain Claude session as the crew's main
+hc-crew start --from SESSION ['<message>']   # continue a plain Claude session as the crew's main
 hc-crew update         hc-crew version
 ```
+
+The task is optional: without one, main starts idle and you type the first message yourself. Quote the task with single quotes. Inside double quotes your shell runs anything in backticks, so `` "look at `routes/api.php`" `` reaches main as "look at".
 
 ## How the dashboard knows things
 

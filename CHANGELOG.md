@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-11-17
+
+### Changed
+
+- The README and `hc-crew help` show the task as optional and quote it with single quotes. With double quotes, the shell runs anything in backticks before hc-crew sees it, so a task such as "look at `routes/api.php`" reached main as "look at".
+
 ## [0.1.4] - 2026-11-17
 
 ### Changed
@@ -60,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.4...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/shadowbane/hc-crew/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/shadowbane/hc-crew/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/shadowbane/hc-crew/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/shadowbane/hc-crew/compare/v0.1.1...v0.1.2
