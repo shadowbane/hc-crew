@@ -158,6 +158,9 @@ func launch(m *Meta, mainResume, advResume bool, prompt string) error {
 	adv := append(env("advisor"), "--model", m.AdvisorModel)
 	adv = append(adv, session(m.AdvisorSession, advResume)...)
 	adv = append(adv, "-n", m.AdvisorName,
+		// The advisor is never driven by hand, so keep it out of the user's
+		// Remote Control session list even when remoteControlAtStartup is on.
+		"--settings", `{"remoteControlAtStartup":false}`,
 		"--append-system-prompt", fmt.Sprintf(advisorPrompt, m.ID, bin),
 		"--disallowedTools", "Edit,Write,MultiEdit,NotebookEdit,Agent,Task",
 		"--allowedTools", "Read,Grep,Glob,Bash("+bin+" advise:*)")
