@@ -24,6 +24,7 @@ type Meta struct {
 	MainSession    string    `json:"main_session"`
 	AdvisorSession string    `json:"advisor_session"`
 	MainModel      string    `json:"main_model"`
+	MainEffort     string    `json:"main_effort,omitempty"` // "" = high, for crews saved before 0.1.7
 	AdvisorModel   string    `json:"advisor_model"`
 	FromSession    bool      `json:"from_session,omitempty"` // main continues a session the user started`
 }

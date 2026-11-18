@@ -47,10 +47,14 @@ func cmdStart(args []string) error {
 	fs := flag.NewFlagSet("start", flag.ContinueOnError)
 	cwd := fs.String("cwd", "", "working directory (default: current)")
 	mainModel := fs.String("main-model", "opus", "model for the main session")
+	mainEffort := fs.String("main-effort", "high", "effort for the main session (low, medium, high, xhigh, max)")
 	advModel := fs.String("advisor-model", "claude-fable-5-2", "model for the advisor")
 	noUI := fs.Bool("no-ui", false, "start the crew without opening the dashboard")
 	from := fs.String("from", "", "continue this Claude session (id or unique prefix) as the crew's main")
 	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if err := checkEffort(*mainEffort); err != nil {
 		return err
 	}
 	task := strings.TrimSpace(strings.Join(fs.Args(), " "))
@@ -77,7 +81,7 @@ func cmdStart(args []string) error {
 		ID: id, Task: task, Cwd: abs, Created: time.Now(),
 		MainName: "crew-" + id + "-main", AdvisorName: "crew-" + id + "-advisor",
 		MainSession: newUUID(), AdvisorSession: newUUID(),
-		MainModel: *mainModel, AdvisorModel: *advModel,
+		MainModel: *mainModel, MainEffort: *mainEffort, AdvisorModel: *advModel,
 	}
 	mainResume := false
 	if src != nil {
@@ -168,7 +172,11 @@ func launch(m *Meta, mainResume, advResume bool, prompt string) error {
 		return fmt.Errorf("start advisor: %w", err)
 	}
 
-	main := append(env("main"), "--model", m.MainModel)
+	effort := m.MainEffort
+	if effort == "" {
+		effort = "high"
+	}
+	main := append(env("main"), "--model", m.MainModel, "--effort", effort)
 	main = append(main, session(m.MainSession, mainResume)...)
 	if !m.FromSession {
 		main = append(main, "-n", m.MainName) // keep the user's own name on a session brought in with --from
@@ -321,6 +329,16 @@ func herdrLog(m *Meta, step string, out []byte) {
 func jsonArr(xs ...string) string {
 	b, _ := json.Marshal(xs)
 	return string(b)
+}
+
+// checkEffort rejects a level claude would refuse, before anything starts:
+// a bad --effort would leave the crew with a main that exited at once.
+func checkEffort(e string) error {
+	switch e {
+	case "low", "medium", "high", "xhigh", "max":
+		return nil
+	}
+	return fmt.Errorf("--main-effort %q: use low, medium, high, xhigh or max", e)
 }
 
 func cmdLs() error {

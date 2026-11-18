@@ -310,3 +310,16 @@ func TestCrewLabel(t *testing.T) {
 		t.Errorf("unsaved session: want task, got %q", got)
 	}
 }
+
+func TestCheckEffort(t *testing.T) {
+	for _, e := range []string{"low", "medium", "high", "xhigh", "max"} {
+		if err := checkEffort(e); err != nil {
+			t.Errorf("%s: %v", e, err)
+		}
+	}
+	for _, e := range []string{"", "hi", "HIGH"} {
+		if checkEffort(e) == nil {
+			t.Errorf("%q should be rejected", e)
+		}
+	}
+}

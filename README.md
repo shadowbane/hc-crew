@@ -46,7 +46,7 @@ When main or the advisor is blocked on a permission prompt or a question, the da
 ## Commands
 
 ```
-hc-crew start [--cwd DIR] [--no-ui] [--main-model M] [--advisor-model M] ['<task>']
+hc-crew start [--cwd DIR] [--no-ui] [--main-model M] [--main-effort E] [--advisor-model M] ['<task>']
 hc-crew dash [ID]      hc-crew ls      hc-crew stop ID      hc-crew resume ID
 hc-crew start --from SESSION ['<message>']   # continue a plain Claude session as the crew's main
 hc-crew update         hc-crew version

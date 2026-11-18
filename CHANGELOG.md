@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-11-18
+
+### Added
+
+- `hc-crew start --main-effort LEVEL` sets main's effort (low, medium, high, xhigh or max). An unknown level is rejected before anything starts.
+
+### Changed
+
+- Main always runs at high effort unless you pass `--main-effort`, instead of following the effort level in your own Claude settings. If you set xhigh or max globally, pass it here. Existing crews switch to high the next time they are resumed. The advisor is unchanged.
+
 ## [0.1.6] - 2026-11-17
 
 ### Changed
@@ -72,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/shadowbane/hc-crew/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/shadowbane/hc-crew/compare/v0.1.3...v0.1.4
