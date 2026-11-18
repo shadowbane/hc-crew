@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-11-18
+
+### Fixed
+
+- Crew terminals start through your login shell (`$SHELL -l`), so they get the PATH from `~/.zprofile` or `~/.bash_profile`. hc ran them with the environment its server inherited from the Herdr app, which could miss tools like `npx`; then Claude hooks and MCP servers that need them failed ("SessionStart:startup hook failed"), and restarting the hc server did not help. Tools set up only in `~/.zshrc` are still not seen; put their PATH in a login file.
+
 ## [0.1.7] - 2026-11-18
 
 ### Added
@@ -82,7 +88,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.7...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/shadowbane/hc-crew/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/shadowbane/hc-crew/compare/v0.1.4...v0.1.5

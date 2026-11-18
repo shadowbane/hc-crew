@@ -16,6 +16,7 @@ Needs:
 
 - [Claude Code](https://claude.com/claude-code) (`claude` on your PATH), logged in
 - `hc` (herdr-core) for the crew's terminals; the Herdr app is optional (without it the dashboard runs in your terminal)
+- Tools your Claude hooks and MCP servers need (`node`/`npx` and so on) on the PATH of a login shell. Crew terminals start through `$SHELL -l`, which reads `~/.zprofile` or `~/.bash_profile` but not `~/.zshrc`, so a node set up only in `~/.zshrc` (nvm, fnm, volta) is not seen there.
 - Access to the advisor model. The default is `claude-fable-5-2`; without Fable use `--advisor-model opus`
 
 From source: `go install github.com/shadowbane/hc-crew@latest`.

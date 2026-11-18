@@ -212,11 +212,28 @@ func hcRun(m *Meta, role string, argv []string) error {
 	args := []string{"run", "--bg", "--no-parent", "--no-notify", "--json",
 		"--name", name, "--cwd", m.Cwd,
 		"--label", "crew=" + m.ID, "--label", "role=" + role, "--"}
-	out, err := exec.Command("hc", append(args, argv...)...).CombinedOutput()
+	out, err := exec.Command("hc", append(append(args, loginShell()...), argv...)...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+// loginShell is the prefix that runs a crew terminal's command through the
+// user's login shell. hc starts commands with the environment its server
+// captured when it started, so PATH changes made since then (in ~/.zprofile,
+// say) were missing, and hooks or MCP servers that need npx failed.
+func loginShell() []string {
+	sh := os.Getenv("SHELL")
+	switch filepath.Base(sh) {
+	case "zsh", "bash", "sh", "ksh", "dash":
+	default: // fish and others don't take `exec "$@"`
+		sh = "/bin/zsh"
+		if _, err := os.Stat(sh); err != nil {
+			sh = "/bin/sh"
+		}
+	}
+	return []string{sh, "-lc", `exec "$@"`, "hc-crew"}
 }
 
 // writeSettings writes the Claude Code settings used only by this crew's main
