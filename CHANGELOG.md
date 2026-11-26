@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-11-26
+
+### Fixed
+
+- `hc-crew resume` keeps the name you gave main with `/rename`. It used to start main with `-n crew-<id>-main` again, which replaced your name in Claude until you renamed it once more. A crew whose name was already replaced this way gets it back on its next resume.
+- `hc-crew resume` gives main's Herdr tab its title back. The dashboard and `hc-crew stop` save the tab's title in the crew's folder (`tab`), and resume renames the new tab to it. A crew with no saved title gets the name from your `/rename`. The tab still opens in the space that is active, because Herdr can't place it in another one.
+
 ## [0.1.9] - 2026-11-26
 
 ### Changed
@@ -95,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.9...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.10...HEAD
+[0.1.10]: https://github.com/shadowbane/hc-crew/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/shadowbane/hc-crew/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/shadowbane/hc-crew/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...v0.1.7

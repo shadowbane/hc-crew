@@ -102,7 +102,7 @@ func cmdStart(args []string) error {
 	}
 	fmt.Printf("crew %s started\n  main:    hc attach %s\n  advisor: hc attach %s\n  dash:    hc-crew dash %s\n  stop:    hc-crew stop %s\n",
 		id, m.MainName, m.AdvisorName, id, id)
-	return openUI(m, *noUI)
+	return openUI(m, *noUI, "")
 }
 
 // cmdResume restarts a stopped crew on its saved Claude sessions, with the
@@ -130,12 +130,13 @@ func cmdResume(args []string) error {
 	if sessionSaved(m.MainSession) {
 		note = resumeNote // a resumed conversation still remembers the crew rules it started with
 	}
+	tab := resumeTabName(m) // read before launch adds anything to the transcript
 	if err := launch(m, true, true, note); err != nil {
 		return err
 	}
 	_ = appendEvent(m.ID, Event{Kind: "resume", Text: "crew resumed"})
 	fmt.Printf("crew %s resumed\n  main:    hc attach %s\n  advisor: hc attach %s\n", m.ID, m.MainName, m.AdvisorName)
-	return openUI(m, *noUI)
+	return openUI(m, *noUI, tab)
 }
 
 // launch starts the advisor and main terminals. Each one either starts its
@@ -179,7 +180,8 @@ func launch(m *Meta, mainResume, advResume bool, prompt string) error {
 	main := append(env("main"), "--model", m.MainModel, "--effort", effort)
 	main = append(main, session(m.MainSession, mainResume)...)
 	if !m.FromSession {
-		main = append(main, "-n", m.MainName) // keep the user's own name on a session brought in with --from
+		// --from sessions keep the user's own name; so does a resumed one they renamed
+		main = append(main, "-n", mainSessionName(m, mainResume))
 	}
 	main = append(main, "--settings", settings,
 		"--append-system-prompt", fmt.Sprintf(mainPrompt, m.ID, bin))
@@ -193,11 +195,12 @@ func launch(m *Meta, mainResume, advResume bool, prompt string) error {
 	return nil
 }
 
-func openUI(m *Meta, noUI bool) error {
+// openUI shows the crew: in Herdr, main's tab is titled tab when it isn't "".
+func openUI(m *Meta, noUI bool, tab string) error {
 	if noUI {
 		return nil
 	}
-	if openInHerdr(m, selfPath()) {
+	if openInHerdr(m, selfPath(), tab) {
 		fmt.Println("opened in Herdr: main on the left, dashboard on the right")
 		return nil
 	}
@@ -258,7 +261,7 @@ var rePane = regexp.MustCompile(`"(pane|pane_id)"\s*:\s*"(p[0-9a-z]+)"`)
 
 // openInHerdr gives the main terminal a tab in the Herdr window and splits the
 // dashboard to its right. Returns false when there is no Herdr window to use.
-func openInHerdr(m *Meta, bin string) bool {
+func openInHerdr(m *Meta, bin, tab string) bool {
 	if _, err := exec.LookPath("herdr-app"); err != nil {
 		return false
 	}
@@ -307,6 +310,7 @@ func openInHerdr(m *Meta, bin string) bool {
 		out, err = exec.Command("herdr-app", split...).CombinedOutput()
 		herdrLog(m, "pane.split "+pane, out)
 		if err == nil && !strings.Contains(string(out), `"error"`) {
+			restoreTab(m, tab)
 			return true
 		}
 	}
@@ -427,6 +431,7 @@ func cmdStop(args []string) error {
 	if err != nil {
 		return err
 	}
+	saveTab(m) // so resume can give main's tab its title back
 	cmdStopQuiet(m)
 	fmt.Printf("crew %s stopped (state kept in %s)\n", m.ID, crewDir(m.ID))
 	return nil

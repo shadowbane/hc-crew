@@ -129,7 +129,10 @@ func (d *dashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// crewLabel reads main's whole transcript, so keep it off the UI loop.
 			d.naming = true
 			m := *d.m
-			return d, tea.Batch(tick(), func() tea.Msg { return labelMsg(crewLabel(&m)) })
+			return d, tea.Batch(tick(), func() tea.Msg {
+				saveTab(&m) // the tab title, for resume after Herdr restarts
+				return labelMsg(crewLabel(&m))
+			})
 		}
 		return d, tick()
 	case labelMsg:
