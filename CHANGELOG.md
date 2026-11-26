@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-11-26
+
+### Changed
+
+- `hc-crew ls` shows two lines per crew. The first line is unchanged: id, start time, main and advisor state, and the crew's name. The second line is indented and shows the folder the crew works in (with your home folder as `~`), then Claude's own title for main's session, or its first prompt you typed. The title is left out when it only repeats the name. Scripts that read `ls` can keep the old format with `hc-crew ls | grep -v '^ '`.
+- Claude Code's own notes and messages pasted in from other terminals no longer count as a session's first prompt, so they don't end up as a crew's title.
+
 ## [0.1.8] - 2026-11-18
 
 ### Fixed
@@ -88,7 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hc-crew version` and `hc-crew update`.
 - A one-line installer and updater (`install.sh`) for curl or wget, which verifies checksums. A tag-triggered release workflow builds macOS and Linux binaries for arm64 and amd64.
 
-[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.8...HEAD
+[unreleased]: https://github.com/shadowbane/hc-crew/compare/v0.1.9...HEAD
+[0.1.9]: https://github.com/shadowbane/hc-crew/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/shadowbane/hc-crew/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/shadowbane/hc-crew/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/shadowbane/hc-crew/compare/v0.1.5...v0.1.6

@@ -23,7 +23,7 @@ Usage:
   hc-crew start [--cwd DIR] [--no-ui] ['<task>'] start a crew (task optional) and open its dashboard
   hc-crew start --from SESSION ['<message>']     continue a Claude session as the crew's main
   hc-crew dash [ID]                              dashboard for a crew (default: newest)
-  hc-crew ls                                     list crews
+  hc-crew ls                                     list crews with their folder and title
   hc-crew stop ID                                end a crew's terminals (state is kept)
   hc-crew resume [--no-ui] ID                    restart a stopped crew on its saved sessions
   hc-crew update                                 install the latest release over this binary

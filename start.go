@@ -364,11 +364,48 @@ func cmdLs() error {
 		fmt.Println("no crews")
 		return nil
 	}
+	home, _ := os.UserHomeDir()
 	for _, m := range ms {
-		fmt.Printf("%s  %s  main:%-9s advisor:%-9s %s\n", m.ID, m.Created.Format("01-02 15:04"),
-			hcState(m.MainName), hcState(m.AdvisorName), trunc(crewLabel(m), 60))
+		label, auto := crewNames(m)
+		fmt.Print(formatLsRow(m, hcState(m.MainName), hcState(m.AdvisorName), label, auto, home))
 	}
 	return nil
+}
+
+// formatLsRow is one crew in `hc-crew ls`: the id, start time, states and
+// label, then an indented line with the folder and Claude's own title for
+// main's session. The title is left out when it repeats the label, and the
+// second line when it would be empty.
+func formatLsRow(m *Meta, mainState, advState, label, auto, home string) string {
+	row := fmt.Sprintf("%s  %s  main:%-9s advisor:%-9s %s\n", m.ID, m.Created.Format("01-02 15:04"),
+		mainState, advState, trunc(label, 60))
+	if sameTitle(label, auto) {
+		auto = ""
+	}
+	var parts []string
+	if m.Cwd != "" {
+		parts = append(parts, tildeHome(m.Cwd, home))
+	}
+	if auto != "" {
+		parts = append(parts, trunc(auto, 70))
+	}
+	if len(parts) == 0 {
+		return row
+	}
+	return row + "      " + strings.Join(parts, "  ·  ") + "\n"
+}
+
+// tildeHome shows a path under home as ~/…, leaving /Users/bob2 alone for home /Users/bob.
+func tildeHome(p, home string) string {
+	switch {
+	case home == "" || home == "/":
+		return p
+	case p == home:
+		return "~"
+	case strings.HasPrefix(p, home+"/"):
+		return "~" + p[len(home):]
+	}
+	return p
 }
 
 func hcState(name string) string {
